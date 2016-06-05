@@ -28,7 +28,7 @@ class AvrohuggerGenTask(SimpleCodegenTask,NailgunTask):
         super(AvrohuggerGenTask, cls).register_options(register)
         cls.register_jvm_tool(register, 'avrohugger-codegen', classpath=[
             JarDependency(org='com.julianpeeters', name='avrohugger-tools_2.11', rev='0.10.1'),
-            ])
+        ])
 
     @property
     def avrohugger_classpath(self):
@@ -59,11 +59,9 @@ class AvrohuggerGenTask(SimpleCodegenTask,NailgunTask):
         """
         """
         logger.info("AvrohuggerGenTask: _compile_schema")
-        logger.info("AvrohuggerGenTask: classpath is %s", self.avrohugger_classpath)
-        java_main = 'avrohugger.tool.Main'
         logger.info("AvrohuggerGenTask: invoking avrohugger-tools with args %s", args)
         result = self.runjava(classpath=self.avrohugger_classpath,
-                              main=java_main,
+                              main='avrohugger.tool.Main',
                               args=args,
                               workunit_name='avrohugger-tools')
         logger.info("avrohugger-tools returns %i", result)
@@ -89,12 +87,22 @@ class AvrohuggerGenTask(SimpleCodegenTask,NailgunTask):
             raise TaskError('Invalid target type "{class_type}" (expected ScalaAvroLibrary)'
                 .format(class_type=type(target).__name__))
 
-        for source in target.sources_relative_to_buildroot():
-            #output_package = target.package
-            #if output_package is None:
-            #    raise TaskError('No output package specified')
+        definition_type = target.definition_type
+        if definition_type == 'standard':
+            operation = 'generate'
+        elif definition_type == 'specific':
+            operation = 'generate-specific'
+        elif definition_type == 'scavro':
+            operation = 'generate-scavro'
+        else:
+            raise TaskError('avrohugger unknown definition_type {}'.format(definition_type))
 
-            args = ['generate', 'schema', source, target_workdir]
+        for source in target.sources_relative_to_buildroot():
+            if source.endswith('.avsc'):
+                filetype = 'schema'
+            else:
+                raise TaskError('avrohugger unknown file type for {}'.format(source))
+            args = [operation, filetype, source, target_workdir]
             result = self._compile_schema(args)
 
             if result != 0:
