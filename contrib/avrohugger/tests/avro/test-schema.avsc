@@ -1,5 +1,5 @@
 {
-    "namespace": "pants.avrohugger",
+    "namespace": "pants.avrohugger.avro",
     "type": "record",
     "name": "TestRecord",
     "fields": [

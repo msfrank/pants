@@ -1,7 +1,8 @@
 package pants.avrohugger.app
 
-import pants.avrohugger.TestRecord
+import pants.avrohugger.avro.TestRecord
 
 object MainApp extends App {
-    println("hello, avro!")
+    val record = TestRecord("foo")
+    println("record = %s".format(record))
 }

@@ -18,9 +18,21 @@ class AvrohuggerGenTask(SimpleCodegenTask,NailgunTask):
     """
 
     @classmethod
+    def product_types(cls):
+        logger.info("AvrohuggerGenTask: product_types")
+        return [ 'scala', ]
+
+    @classmethod
     def register_options(cls, register):
         logger.info("AvrohuggerGenTask: register_options")
         super(AvrohuggerGenTask, cls).register_options(register)
+        cls.register_jvm_tool(register, 'avrohugger-codegen', classpath=[
+            JarDependency(org='com.julianpeeters', name='avrohugger-tools_2.11', rev='0.10.1'),
+            ])
+
+    @property
+    def avrohugger_classpath(self):
+        return self.tool_classpath('avrohugger-codegen')
 
     @classmethod
     def prepare(cls, options, round_manager):
@@ -47,19 +59,17 @@ class AvrohuggerGenTask(SimpleCodegenTask,NailgunTask):
         """
         """
         logger.info("AvrohuggerGenTask: _compile_schema")
-        #classpath = self.dist.find_libs(['avrohugger-tools.jar'])
-        #logger.info("AvrohuggerGenTask: classpath is %s", classpath)
-        #java_main = 'com.sun.tools.internal.xjc.Driver'
-        #return self.runjava(classpath=classpath, main=java_main, args=args, workunit_name='avrohugger-tools')
-        _args = ['/usr/bin/java','-jar','/Users/msfrank/src/fathom/avrohugger-tools_2.11-0.10.1-assembly.jar'] + args
-        logger.info("AvrohuggerGenTask: invoking %s", _args)
-        try:
-            exitstatus = subprocess.call(_args)
-            logger.info("avrohugger process returns %i", exitstatus)
-        except Exception, e:
-            logger.error("avrohugger subprocess failed: %s", str(e))
-            exitstatus = 1
-        return exitstatus
+        logger.info("AvrohuggerGenTask: classpath is %s", self.avrohugger_classpath)
+        java_main = 'avrohugger.tool.Main'
+        logger.info("AvrohuggerGenTask: invoking avrohugger-tools with args %s", args)
+        result = self.runjava(classpath=self.avrohugger_classpath,
+                              main=java_main,
+                              args=args,
+                              workunit_name='avrohugger-tools')
+        logger.info("avrohugger-tools returns %i", result)
+        if result != 0:
+            raise TaskError('avrohugger-tools returns {}'.format(result))
+        return result
 
     def synthetic_target_type(self, target):
         """
