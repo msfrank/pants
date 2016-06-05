@@ -1,0 +1,8 @@
+{
+    "namespace": "pants.avrohugger",
+    "type": "record",
+    "name": "TestRecord",
+    "fields": [
+        { "name": "param", "type": "string" }
+    ]
+}
